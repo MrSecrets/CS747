@@ -27,10 +27,78 @@ def epsilon_greedy(ins, ep, hz):
 	return REG
 
 def ucb(ins, ep, hz):
-	return
+	n_arms = ins.size
+	rewards = np.zeros(n_arms)
+	pulls = np.zeros(n_arms)
+	total_reward = 0
+
+	for i in range(0,hz):
+		if i<n_arms:
+			arm_pick = i
+			reward = np.random.binomial(n=1, p=ins[arm_pick])
+			rewards[arm_pick] += reward
+			pulls[arm_pick] += 1
+			total_reward += reward		
+		else:
+			with np.errstate(divide='ignore', invalid='ignore'):
+				emp_mean = rewards/pulls				
+			emp_mean[np.isnan(emp_mean)] = 1			
+			ucb_at = emp_mean + np.sqrt(2*log(i)/pulls)
+			arm_pick = np.argmax(ucb_at)
+			reward = np.random.binomial(n=1, p=ins[arm_pick])
+			rewards[arm_pick] += reward
+			pulls[arm_pick] += 1
+			total_reward += reward		
+
+	REG = np.max(ins)*hz - total_reward
+	return REG
+
+def kl_divergence(p,q):
+	return d = p*log(p/q) + (1-p)*log((1-p)/(1-q))
 
 def kl_ucb(ins, ep, hz):
-	return
+	n_arms = ins.size
+	rewards = np.zeros(n_arms)
+	pulls = np.zeros(n_arms)
+	ucb_kl = np.zeros(n_arms)
+	total_reward = 0
+
+	for i in range(0,hz):
+		if i<n_arms:
+			arm_pick = i
+			reward = np.random.binomial(n=1, p=ins[arm_pick])
+			rewards[arm_pick] += reward
+			pulls[arm_pick] += 1
+			total_reward += reward		
+		else:
+			with np.errstate(divide='ignore', invalid='ignore'):
+				emp_mean = rewards/pulls				
+			emp_mean[np.isnan(emp_mean)] = 1
+			bound = np.log(i) + 3*np.log(np.log(i))
+			for j in range(0, n_arms):
+				if emp_mean[j] == 1:
+					ucb_kl[j] =1
+				else:
+					q = emp_mean[j]
+					increment = (1-q)/12
+					KL = 0
+					while q<1:
+						KL_temp = kl_divergence(emp_mean[j],q)
+						if KL_temp*pulls[j] < bound:
+							if KL<KL_temp:
+								KL = KL_temp
+								q_ideal = q
+						q = q + increment
+					ucb_kl[j] = q
+
+			arm_pick = np.argmax(ucb_kl)
+			reward = np.random.binomial(n=1, p=ins[arm_pick])
+			rewards[arm_pick] += reward
+			pulls[arm_pick] += 1
+			total_reward += reward		
+
+	REG = np.max(ins)*hz - total_reward
+	return REG
 
 def thomson_sampling(ins, ep, hz):
 	return
