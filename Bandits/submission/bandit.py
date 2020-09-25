@@ -1,7 +1,11 @@
 import numpy as np
 import argparse
 
-def epsilon_greedy(ins, ep, hz):
+import warnings
+warnings.filterwarnings("ignore")
+
+def epsilon_greedy(ins, ep, hz, rs):
+	np.random.seed(rs)
 	n_arms = ins.size
 	rewards = np.zeros(n_arms)
 	pulls = np.zeros(n_arms)
@@ -26,7 +30,8 @@ def epsilon_greedy(ins, ep, hz):
 	REG = np.max(ins)*hz - total_reward
 	return REG
 
-def ucb(ins, ep, hz):
+def ucb(ins,ep, hz,rs):
+	np.random.seed(rs)
 	n_arms = ins.size
 	rewards = np.zeros(n_arms)
 	pulls = np.zeros(n_arms)
@@ -56,7 +61,8 @@ def ucb(ins, ep, hz):
 def kl_divergence(p,q):
 	return p*np.log(p/q) + (1-p)*np.log((1-p)/(1-q))
 
-def kl_ucb(ins, ep, hz):
+def kl_ucb(ins,ep, hz,rs):
+	np.random.seed(rs)
 	n_arms = ins.size
 	rewards = np.zeros(n_arms)
 	pulls = np.zeros(n_arms)
@@ -99,7 +105,8 @@ def kl_ucb(ins, ep, hz):
 	REG = np.max(ins)*hz - total_reward
 	return REG
 
-def thompson_sampling(ins, ep, hz):
+def thompson_sampling(ins,ep, hz,rs):
+	np.random.seed(rs)
 	n_arms = ins.size
 	rewards = np.zeros(n_arms)
 	s_at = np.zeros(n_arms)
@@ -122,7 +129,7 @@ def thompson_sampling(ins, ep, hz):
 	REG = np.max(ins)*hz - total_reward
 	return REG
 
-def thompson_hint(ins, ep, hz):
+def thompson_hint(ins, hz):
 	return 0
 
 
@@ -147,24 +154,24 @@ def main():
 
 
 	if(al=='epsilon-greedy'):
-		bandit = epsilon_greedy(ins, ep, hz)
-		print(ins, al, rs, ep, hz, bandit, sep=",")
+		bandit = epsilon_greedy(ins, ep, hz, rs)
+		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 	elif(al=='ucb'):
-		bandit = ucb(ins, ep, hz)
-		print(ins, al, rs, ep, hz, bandit, sep=",")
+		bandit = ucb(ins, ep, hz, rs)
+		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 	elif(al=='kl-ucb'):
-		bandit = kl_ucb(ins, ep, hz)
-		print(ins, al, rs, ep, hz, bandit, sep=",")
+		bandit = kl_ucb(ins, ep, hz, rs)
+		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 	elif(al=='thompson-sampling'):
-		bandit = thompson_sampling(ins, ep, hz)
-		print(ins, al, rs, ep, hz, bandit, sep=",")
+		bandit = thompson_sampling(ins, ep, hz, rs)
+		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 	elif(al=='thompson-sampling-with-hint'):
-		bandit = thompson_hint(ins, ep, hz)
-		print(ins, al, rs, ep, hz, bandit, sep=",")
+		bandit = thompson_hint(ins, hz)
+		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 if __name__ == '__main__':
 	main()
