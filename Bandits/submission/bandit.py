@@ -43,7 +43,7 @@ def ucb(ins, ep, hz):
 			with np.errstate(divide='ignore', invalid='ignore'):
 				emp_mean = rewards/pulls				
 			emp_mean[np.isnan(emp_mean)] = 1			
-			ucb_at = emp_mean + np.sqrt(2*log(i)/pulls)
+			ucb_at = emp_mean + np.sqrt(2*np.log(i)/pulls)
 			arm_pick = np.argmax(ucb_at)
 			reward = np.random.binomial(n=1, p=ins[arm_pick])
 			rewards[arm_pick] += reward
@@ -54,7 +54,7 @@ def ucb(ins, ep, hz):
 	return REG
 
 def kl_divergence(p,q):
-	return d = p*log(p/q) + (1-p)*log((1-p)/(1-q))
+	return p*np.log(p/q) + (1-p)*np.log((1-p)/(1-q))
 
 def kl_ucb(ins, ep, hz):
 	n_arms = ins.size
@@ -80,16 +80,15 @@ def kl_ucb(ins, ep, hz):
 					ucb_kl[j] =1
 				else:
 					q = emp_mean[j]
+					q_ideal = q
 					increment = (1-q)/12
 					KL = 0
 					while q<1:
 						KL_temp = kl_divergence(emp_mean[j],q)
 						if KL_temp*pulls[j] < bound:
-							if KL<KL_temp:
-								KL = KL_temp
-								q_ideal = q
+							q_ideal = q
 						q = q + increment
-					ucb_kl[j] = q
+					ucb_kl[j] = q_ideal
 
 			arm_pick = np.argmax(ucb_kl)
 			reward = np.random.binomial(n=1, p=ins[arm_pick])
@@ -100,19 +99,39 @@ def kl_ucb(ins, ep, hz):
 	REG = np.max(ins)*hz - total_reward
 	return REG
 
-def thomson_sampling(ins, ep, hz):
-	return
+def thompson_sampling(ins, ep, hz):
+	n_arms = ins.size
+	rewards = np.zeros(n_arms)
+	s_at = np.zeros(n_arms)
+	f_at = np.zeros(n_arms)
+	x_at = np.zeros(n_arms)
+	total_reward = 0
 
-def thomson_hint(ins, ep, hz):
-	return
+	for i in range(0, hz):
+		for j in range(0,n_arms):
+			x_at[j] = np.random.beta(a=s_at[j]+1, b=f_at[j]+1)
+		arm_pick = np.argmax(x_at)
+		reward = np.random.binomial(n=1, p=ins[arm_pick])
+		if reward:
+			s_at[arm_pick] += 1
+		else:
+			f_at[arm_pick] += 1
+		rewards[arm_pick] += reward
+		total_reward += reward
+
+	REG = np.max(ins)*hz - total_reward
+	return REG
+
+def thompson_hint(ins, ep, hz):
+	return 0
 
 
 def main():
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--instance", type=str, default='../instances/i-1.txt')
-	parser.add_argument("--algorithm", type=str, default='epsilon-greedy')
-	parser.add_argument("--randomSeed", type=int, default='1')
+	parser.add_argument("--algorithm", type=str, default='thompson-sampling', help='algorithm')
+	parser.add_argument("--randomSeed", type=int, default='100')
 	parser.add_argument("--epsilon", type=float, default='0.5')
 	parser.add_argument("--horizon", type=int, default='30')
 
@@ -123,8 +142,8 @@ def main():
 	rs = args.randomSeed
 	ep = args.epsilon
 	hz = args.horizon
-	print(ins)
-	print(ins.size)
+
+	np.random.seed(rs)
 
 
 	if(al=='epsilon-greedy'):
@@ -133,19 +152,19 @@ def main():
 	
 	elif(al=='ucb'):
 		bandit = ucb(ins, ep, hz)
-		print(ins, al, rs, ep, hz, REG, sep=",")
+		print(ins, al, rs, ep, hz, bandit, sep=",")
 	
 	elif(al=='kl-ucb'):
 		bandit = kl_ucb(ins, ep, hz)
-		print(ins, al, rs, ep, hz, REG, sep=",")
+		print(ins, al, rs, ep, hz, bandit, sep=",")
 	
-	elif(al=='thomson-sampling'):
-		bandit = thomson_sampling(ins, ep, hz)
-		print(ins, al, rs, ep, hz, REG, sep=",")
+	elif(al=='thompson-sampling'):
+		bandit = thompson_sampling(ins, ep, hz)
+		print(ins, al, rs, ep, hz, bandit, sep=",")
 	
-	elif(al=='thomson-sampling-with-hint'):
-		bandit = thomson_hint(ins, ep, hz)
-		print(ins, al, rs, ep, hz, REG, sep=",")
+	elif(al=='thompson-sampling-with-hint'):
+		bandit = thompson_hint(ins, ep, hz)
+		print(ins, al, rs, ep, hz, bandit, sep=",")
 	
 if __name__ == '__main__':
 	main()
