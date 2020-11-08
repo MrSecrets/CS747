@@ -87,9 +87,9 @@ def kl_ucb(ins,ep, hz,rs):
 				else:
 					q = emp_mean[j]
 					q_ideal = q
-					increment = (1-q)/12
+					increment = (0.99-q)/12
 					KL = 0
-					while q<1:
+					while q<0.99:
 						KL_temp = kl_divergence(emp_mean[j],q)
 						if KL_temp*pulls[j] < bound:
 							q_ideal = q
@@ -129,7 +129,41 @@ def thompson_sampling(ins,ep, hz,rs):
 	REG = np.max(ins)*hz - total_reward
 	return REG
 
-def thompson_hint(ins, hz):
+def thompson_hint(ins,ep, hz, rs, true_mean_ls):
+	np.random.seed(rs)
+	n_arms = ins.size
+	rewards = np.zeros(n_arms)
+	s_at = np.zeros(n_arms)
+	f_at = np.zeros(n_arms)
+	x_at = np.zeros(n_arms)
+	total_reward = 0
+
+	for i in range(0, hz):
+		move = np.random.uniform()
+
+		if move<=ep:
+			arm_pick = np.argmax(true_mean_ls)
+			reward = np.random.binomial(n=1, p=ins[arm_pick])
+			if reward:
+				s_at[arm_pick] += 1
+			else:
+				f_at[arm_pick] += 1
+		else:
+			for j in range(0,n_arms):
+				x_at[j] = np.random.beta(a=s_at[j]+1, b=f_at[j]+1)
+			arm_pick = np.argmax(x_at)
+			reward = np.random.binomial(n=1, p=ins[arm_pick])
+			if reward:
+				s_at[arm_pick] += 1
+			else:
+				f_at[arm_pick] += 1
+		
+		rewards[arm_pick] += reward
+		total_reward += reward
+
+	REG = np.max(ins)*hz - total_reward
+	return REG
+
 	return 0
 
 
@@ -170,7 +204,7 @@ def main():
 		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 	elif(al=='thompson-sampling-with-hint'):
-		bandit = thompson_hint(ins, hz)
+		bandit = thompson_hint(ins, ep, hz, rs, true_mean)
 		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 if __name__ == '__main__':

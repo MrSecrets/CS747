@@ -8,7 +8,7 @@ al = ["epsilon-greedy", "ucb", "kl-ucb", "thompson-sampling"]
 horizons = [100, 400, 1600, 6400, 25600, 102400]
 fig, ax = plt.subplots()
 
-ins = instances[2]
+ins = instances[1]
 ins_value=np.loadtxt(ins)
 
 regret1 = []
