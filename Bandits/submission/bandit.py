@@ -129,13 +129,14 @@ def thompson_sampling(ins,ep, hz,rs):
 	REG = np.max(ins)*hz - total_reward
 	return REG
 
-def thompson_hint(ins,ep, hz, rs, true_mean_ls):
+def thompson_hint(ins,ep, hz, rs):
 	np.random.seed(rs)
 	n_arms = ins.size
 	rewards = np.zeros(n_arms)
 	s_at = np.zeros(n_arms)
 	f_at = np.zeros(n_arms)
 	x_at = np.zeros(n_arms)
+	true_mean_ls = ins
 	total_reward = 0
 
 	for i in range(0, hz):
@@ -175,6 +176,7 @@ def main():
 	parser.add_argument("--randomSeed", type=int, default='100')
 	parser.add_argument("--epsilon", type=float, default='0.5')
 	parser.add_argument("--horizon", type=int, default='30')
+	# parser.add_argument("--true_mean", type=float, default='[0,0]')
 
 	args = parser.parse_args()
 
@@ -183,6 +185,7 @@ def main():
 	rs = args.randomSeed
 	ep = args.epsilon
 	hz = args.horizon
+	# tm = args.true_mean
 
 	np.random.seed(rs)
 
@@ -204,7 +207,7 @@ def main():
 		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 	elif(al=='thompson-sampling-with-hint'):
-		bandit = thompson_hint(ins, ep, hz, rs, true_mean)
+		bandit = thompson_hint(ins, ep, hz, rs)
 		print(args.instance, al, rs, ep, hz, bandit, sep=", ")
 	
 if __name__ == '__main__':
