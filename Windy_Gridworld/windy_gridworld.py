@@ -27,7 +27,7 @@ class windy_gridworld():
 		self.status = 0
 		# print(grid, start, goal, wind)
 
-	def move_grid_4(self,action):
+	def move_grid_4(self,action,stoch):
 	# north = 0, east = 1, south = 2, west = 3
 		loc = self.current_loc
 		if action==0:
@@ -38,8 +38,15 @@ class windy_gridworld():
 			loc[0]+=1
 		elif action==3:
 			loc[1]-=1
+	
+		self.current_loc = loc
 
-		loc[0]-=self.wind(loc[0])
+		if self.current_loc==self.goal:
+			self.status = 1
+			return -1, self.current_loc , self.status
+
+
+		loc[0]-=self.wind(loc[0]) + stoch
 
 		loc[0] = 0 if loc[0]<0
 		loc[1] = 0 if loc[1]<0
@@ -52,7 +59,7 @@ class windy_gridworld():
 		
 		return -1, self.current_loc , self.status
 
-	def move_grid_8(self,action, loc):
+	def move_grid_8(self,action, loc,stoch):
 	# north = 0, ne = 1, east = 2, se = 3 south=4, sw = 5, west=6, nw=7
 		loc = self.current_loc
 		if action==0:
@@ -76,7 +83,13 @@ class windy_gridworld():
 			loc[0] -= 1
 			loc[1] -= 1
 
-		loc[0]-=self.wind(loc[0])
+		self.current_loc = loc
+
+		if self.current_loc==self.goal:
+			self.status = 1
+			return -1, self.current_loc , self.status
+
+		loc[0]-=self.wind(loc[0]) + stoch
 
 		loc[0] = 0 if loc[0]<0
 		loc[1] = 0 if loc[1]<0
@@ -86,7 +99,8 @@ class windy_gridworld():
 		self.current_loc = loc
 
 		if self.current_loc==self.goal:
-			self.status
+			self.status = 1
+
 		
 		return -1 , self.current_loc, self.status
 
